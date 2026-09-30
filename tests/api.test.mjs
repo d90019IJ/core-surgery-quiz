@@ -139,3 +139,15 @@ test('roster blocks unknown IDs and mismatched names on every student action, in
   assert.equal((await call({action:'admin-roster'},code)).body.rows.length,2);
   assert.equal((await call({action:'info'})).body.rows,undefined);
 });
+
+test('only teachers may add eligible students; duplicates never overwrite',async t=>{
+ const {call}=await setup(t);
+ const add={action:'admin-roster-add',name:'補登同學',studentId:' new123 '};
+ assert.equal((await call(add)).status,401);
+ assert.equal((await call({...add,name:' '},code)).status,400);
+ assert.equal((await call(add,code)).status,200);
+ assert.equal((await call({action:'start',name:'補登同學',studentId:'NEW123'})).status,200);
+ assert.equal((await call({...add,name:'覆寫姓名'},code)).status,409);
+ assert.equal((await call({action:'start',name:'補登同學',studentId:'NEW123'})).status,200);
+ assert.equal((await call({action:'admin-roster'},code)).body.rows.length,3);
+});

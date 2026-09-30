@@ -11,6 +11,11 @@ export function localRepository(filename, fixture, { now = () => Date.now() } = 
     db,
     async settings() { return fixture.settings; },
     async exam(id) { return context(id); },
+    async addRoster(examId, identity) {
+      fixture.roster ||= [];
+      if(fixture.roster.some(r=>r.exam_id===examId && r.student_id===identity.studentId)) throw new ApiError(409,'此學號已在應考名單中，請先核對現有資料。');
+      fixture.roster.push({exam_id:examId,student_id:identity.studentId,name:identity.name,group_name:'B'});
+    },
     async authorize(examId, identity) {
       return (fixture.roster || []).find(r=>r.exam_id===examId && r.student_id===identity.studentId && r.name===identity.name)?.name || null;
     },
