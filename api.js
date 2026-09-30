@@ -11,7 +11,7 @@ export async function request(action, data = {}, adminCode = '') {
       signal: AbortSignal.timeout(25000)
     });
   } catch {
-    throw new Error('連線中斷，尚未確認是否交卷成功。請保持此頁並重試；系統不會重複計入交卷。');
+    throw new Error('連線中斷，尚未確認送出結果。請保留此頁並重試或重新查詢完成狀態；系統不會重複計入。');
   }
   let result;
   try { result = await response.json(); }
