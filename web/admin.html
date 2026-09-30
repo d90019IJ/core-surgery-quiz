@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>講師管理｜核心外科講堂</title><link rel="icon" href="./favicon.svg"><link rel="stylesheet" href="./style.css"></head>
+<body>
+<div id="preview-notice" class="preview-notice" hidden>本機預覽 · 非正式考試，資料只儲存在這台電腦</div>
+<header class="site-header"><div class="brand"><span class="brand-mark" aria-hidden="true">＋</span><span>核心外科講堂<small>CORE SURGERY</small></span></div><span class="header-label">講師管理</span></header>
+<main class="admin-main">
+  <section id="login-view" class="admin-login"><h1>講師登入</h1><p class="muted">請輸入專用管理碼，查看與匯出本場成績。</p><form id="admin-login"><label for="teacher-code">管理碼</label><input type="password" id="teacher-code" required autocomplete="current-password" maxlength="150"><p class="error" id="login-error" role="alert"></p><button id="login-button" class="primary full">登入</button></form></section>
+  <section id="dashboard" hidden>
+    <div class="admin-heading"><div><span class="eyebrow">測驗管理</span><h1 id="admin-title"></h1><p id="exam-status" class="muted"></p></div><button id="logout" class="secondary">登出</button></div>
+    <div class="admin-toolbar"><strong id="record-count" aria-live="polite"></strong><div><button id="refresh" class="secondary">重新整理</button><button id="toggle-exam" class="secondary">停止收卷</button><button id="export" class="primary">匯出成績 CSV</button></div></div>
+    <p id="admin-error" class="error" role="alert"></p>
+    <div class="table-wrap"><table><thead><tr><th>姓名</th><th>學號</th><th>交卷時間</th><th>得分</th><th>作答選項</th></tr></thead><tbody id="records"></tbody></table><p id="empty" class="empty" hidden>目前尚無交卷紀錄</p></div>
+    <p class="muted">CSV 可使用 Excel 開啟。重新開放收卷不會清除紀錄，已交卷的學號仍無法重考。</p>
+  </section>
+</main><script src="./config.js"></script><script type="module" src="./admin.js"></script>
+</body></html>

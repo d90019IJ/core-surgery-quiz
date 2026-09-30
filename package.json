@@ -1,0 +1,12 @@
+{
+  "name": "core-surgery-quiz",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/preview.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check web/app.js && node --check web/admin.js && node --check server/application.mjs"
+  },
+  "engines": { "node": ">=22.13" }
+}
