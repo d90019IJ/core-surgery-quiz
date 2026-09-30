@@ -4,7 +4,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="核心外科講堂隨堂測驗">
   <title>核心外科講堂｜隨堂測驗</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=2">
 </head>
 <body>
   <div id="preview-notice" class="preview-notice" hidden>本機預覽 · 非正式考試，資料只儲存在這台電腦</div>
@@ -15,7 +15,7 @@
       <p class="teacher">蔡昕霖老師 · 2024 年講義</p>
       <div class="course-facts"><div><strong>05</strong><span>單選題</span></div><div><strong>01</strong><span>次交卷機會</span></div></div>
       <div class="course-note"><span class="note-line"></span><p>每一題，都是對今天所學的回顧。<br>請確認學號與作答內容後再交卷。</p></div>
-      <div class="steps"><div id="step1" class="step active"><b>1</b>填寫資料</div><div id="step2" class="step"><b>2</b>完成作答</div><div id="step3" class="step"><b>3</b>交卷</div></div>
+      <div class="steps"><div id="step1" class="step active"><b>1</b>填寫資料</div><div id="step2" class="step"><b>2</b>完成作答</div><div id="step3" class="step"><b>3</b>課後問卷</div></div>
     </aside>
     <section class="work-panel" id="work-panel" aria-live="polite">
       <section id="identity-view">
@@ -25,7 +25,7 @@
           <label for="student-name">姓名</label><input id="student-name" name="name" autocomplete="name" maxlength="60" placeholder="請輸入姓名" required>
           <label for="student-id">學號</label><input id="student-id" name="studentId" autocapitalize="characters" autocomplete="off" maxlength="32" placeholder="請輸入學號" required aria-describedby="id-note">
           <p id="id-note" class="field-note">請使用本人學號。同一場測驗，每個學號限交卷一次。</p>
-          <div class="notice"><strong>交卷前請留意</strong><p>交卷後無法再次作答或修改，且不顯示分數、正確答案與解析。</p></div>
+          <div class="notice"><strong>交卷前請留意</strong><p>交卷後無法再次作答或修改。請預留時間填寫必填問卷；兩者皆須於 19:30 前送出，不顯示分數、正確答案或解析。</p></div>
           <p id="identity-error" class="error" role="alert"></p><button id="start-button" class="primary full" type="submit">開始作答</button>
         </form>
       </section>
@@ -38,6 +38,6 @@
   </main>
   <footer id="page-footer">核心外科講堂 · 隨堂測驗</footer>
   <dialog id="submit-dialog" aria-labelledby="dialog-title"><h2 id="dialog-title">確認交卷？</h2><p id="confirm-identity"></p><p class="muted">交卷後無法修改或再次作答。</p><div class="dialog-actions"><button id="cancel-submit" class="secondary">返回檢查</button><button id="confirm-submit" class="primary">確認交卷</button></div></dialog>
-  <script src="./config.js"></script><script type="module" src="./app.js"></script>
+  <script src="./config.js?v=2"></script><script type="module" src="./app.js?v=2"></script>
 </body>
 </html>

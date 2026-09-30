@@ -11,7 +11,9 @@ if (!existsSync(seed)) throw new Error('Local preview requires private/seed.json
 const fixture = JSON.parse(readFileSync(seed, 'utf8'));
 const port = Number(process.env.PORT || 4173);
 fixture.settings.allowed_origins = [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
-const handler = createHandler(localRepository(resolve(root, 'private/preview.sqlite'), fixture));
+const previewBase=process.env.PREVIEW_CLOCK ? Date.parse(process.env.PREVIEW_CLOCK) : null;
+const previewStart=performance.now();
+const handler = createHandler(localRepository(resolve(root, 'private/preview.sqlite'), fixture, previewBase ? {now:()=>previewBase+performance.now()-previewStart} : {}));
 const files = new Set(['index.html', 'style.css', 'app.js', 'api.js', 'admin.html', 'admin.js', 'favicon.svg']);
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 createServer(async (req, res) => {
