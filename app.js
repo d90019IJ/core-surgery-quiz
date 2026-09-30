@@ -33,7 +33,7 @@ function tick() {
   const w = activeWindow(), open = w.state === 'open';
   const labels = { unknown: '正在確認考試時間…', unscheduled: '尚未設定考試日期', before: '尚未開放', open: '開放作答與問卷填寫中', paused: '講師已暫停收件', closed: '考試與問卷皆已截止' };
   $('window-label').textContent = labels[w.state];
-  $('window-date').textContent = w.opensAt ? new Date(w.opensAt).toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit' }) + ' · 18:30–19:30（台灣時間）' : '';
+  $('window-date').textContent = w.opensAt ? new Date(w.opensAt).toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit' }) + ' · ' + new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(w.opensAt)) + '–19:30（台灣時間）' : '';
   if (open) {
     const seconds = Math.max(0, Math.floor((Date.parse(w.closesAt) - w.now) / 1000));
     $('countdown').textContent = '剩餘 ' + Math.floor(seconds / 60) + ' 分 ' + String(seconds % 60).padStart(2, '0') + ' 秒（含問卷）';

@@ -38,6 +38,7 @@ async function refresh() {
   $('exam-status').textContent = exam.id + ' · ' + stateText[exam.window.state];
   $('toggle-exam').textContent = exam.open ? '暫停收件' : '恢復定時收件';
   $('exam-date').value = exam.window.opensAt ? new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(exam.window.opensAt)) : '';
+  $('exam-opens-time').value = exam.window.opensAt ? new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(exam.window.opensAt)) : '18:30';
   const complete = rows.filter(row => row.survey_complete).length;
   $('record-count').textContent = rows.length + ' 人已交卷 · ' + complete + ' 人完成課程 · ' + (rows.length-complete) + ' 人問卷未完成';
   $('records').replaceChildren(...rows.map(row => {
@@ -66,13 +67,13 @@ $('logout').addEventListener('click',()=>{
   $('dashboard').hidden=true;$('login-view').hidden=false;
 });
 $('toggle-exam').addEventListener('click',()=>{
-  if(!confirm(exam.open?'暫停後，考試與問卷都無法送出。確定暫停？':'恢復後仍受指定日期 18:30–19:30 限制，已交卷的學號仍無法重考。確定恢復？'))return;
+  if(!confirm(exam.open?'暫停後，考試與問卷都無法送出。確定暫停？':'恢復後仍受已儲存的日期及開放時間限制，已交卷的學號仍無法重考。確定恢復？'))return;
   run(async()=>{await request('admin-toggle',{open:!exam.open},code);await refresh();});
 });
 $('schedule-form').addEventListener('submit',event=>{
   event.preventDefault();
-  if(!confirm('設定為 '+$('exam-date').value+' 台灣時間 18:30–19:30？既有交卷與完成紀錄會保留。'))return;
-  run(async()=>{await request('admin-schedule',{date:$('exam-date').value},code);await refresh();$('schedule-note').textContent='時間已儲存。考試與問卷於同一天 19:30 截止。';});
+  if(!confirm('設定為 '+$('exam-date').value+' 台灣時間 '+$('exam-opens-time').value+'–19:30？既有交卷與完成紀錄會保留。'))return;
+  run(async()=>{await request('admin-schedule',{date:$('exam-date').value,opensTime:$('exam-opens-time').value},code);await refresh();$('schedule-note').textContent='時間已儲存。考試與問卷於同一天 19:30 截止。';});
 });
 function csvCell(value) {
   let text=String(value??'');if(/^[\s]*[=+@-]/.test(text)||/^0\d+$/.test(text))text="'"+text;
@@ -104,4 +105,9 @@ $('roster-add-form').addEventListener('submit',event=>{
     $('roster-message').textContent='已新增至本場考試名單。';
     await refresh();
   },'roster-error');
+});
+
+$('open-now').addEventListener('click',()=>{
+  if(!confirm('立即開放已儲存日期的本場考試及問卷？僅限考試當天操作，仍於 19:30 截止，已交卷者無法重考。'))return;
+  run(async()=>{await request('admin-open-now',{},code);await refresh();$('schedule-note').textContent='已立即開放，考試與問卷仍於當天 19:30 截止。';});
 });
