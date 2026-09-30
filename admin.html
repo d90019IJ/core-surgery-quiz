@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>講師管理｜核心外科講堂</title><link rel="icon" href="./favicon.svg"><link rel="stylesheet" href="./style.css?v=2"></head>
+<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>講師管理｜核心外科講堂</title><link rel="icon" href="./favicon.svg"><link rel="stylesheet" href="./style.css?v=3"></head>
 <body>
 <div id="preview-notice" class="preview-notice" hidden>本機預覽 · 非正式考試，資料只儲存在這台電腦</div>
 <header class="site-header"><div class="brand"><span class="brand-mark" aria-hidden="true">＋</span><span>核心外科講堂<small>CORE SURGERY</small></span></div><span class="header-label">講師管理</span></header>
@@ -11,7 +11,8 @@
     <p id="admin-error" class="error" role="alert"></p>
     <div class="table-wrap"><table><thead><tr><th>姓名</th><th>學號</th><th>交卷時間</th><th>得分</th><th>作答選項</th><th>課程完成狀態</th></tr></thead><tbody id="records"></tbody></table><p id="empty" class="empty" hidden>目前尚無交卷紀錄</p></div>
     <p class="muted">CSV 可使用 Excel 開啟。恢復收件仍受日期與時間限制，已交卷的學號無法重考。</p>
+    <section class="schedule-card"><h2>B 組應考名單</h2><p id="roster-count"></p><details><summary>查看名單</summary><div class="table-wrap"><table><thead><tr><th>學號</th><th>姓名</th></tr></thead><tbody id="roster"></tbody></table></div></details></section>
     <section class="survey-summary"><h2>匿名課後問卷</h2><p id="survey-release-note" class="muted"></p><button id="export-survey" class="secondary" hidden>匯出匿名問卷統計</button><div id="survey-statistics" class="survey-stats"></div></section>
   </section>
-</main><script src="./config.js?v=2"></script><script type="module" src="./admin.js?v=2"></script>
+</main><script src="./config.js?v=3"></script><script type="module" src="./admin.js?v=3"></script>
 </body></html>

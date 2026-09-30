@@ -27,6 +27,13 @@ async function refresh() {
   do { value = await request('admin-list', {offset}, code); all.push(...value.rows); offset += value.rows.length; } while (value.hasMore);
   rows = all; exam = value.exam;
   stats = await request('admin-survey', {}, code);
+  const roster = (await request('admin-roster', {}, code)).rows;
+  $('roster-count').textContent = roster.length + ' 位同學具備應考資格；須填寫相符的姓名與學號。';
+  $('roster').replaceChildren(...roster.map(row=>{
+    const tr=document.createElement('tr');
+    for(const value of [row.student_id,row.name]){const td=document.createElement('td');td.textContent=value;tr.append(td);}
+    return tr;
+  }));
   $('admin-title').textContent = exam.title;
   $('exam-status').textContent = exam.id + ' · ' + stateText[exam.window.state];
   $('toggle-exam').textContent = exam.open ? '暫停收件' : '恢復定時收件';
@@ -55,7 +62,7 @@ $('admin-login').addEventListener('submit',event=>{
 });
 $('refresh').addEventListener('click',()=>run(refresh));
 $('logout').addEventListener('click',()=>{
-  code='';rows=[];exam=null;stats=null;$('records').replaceChildren();$('survey-statistics').replaceChildren();$('teacher-code').value='';
+  $('roster').replaceChildren();$('roster-count').textContent='';code='';rows=[];exam=null;stats=null;$('records').replaceChildren();$('survey-statistics').replaceChildren();$('teacher-code').value='';
   $('dashboard').hidden=true;$('login-view').hidden=false;
 });
 $('toggle-exam').addEventListener('click',()=>{
