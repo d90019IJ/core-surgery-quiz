@@ -5,7 +5,7 @@ let identity, questions = [], survey = [], busy = false, finished = false, stage
 if (window.QUIZ_CONFIG.preview) $('preview-notice').hidden = false;
 const timePanel = document.createElement('div');
 timePanel.className = 'time-panel';
-timePanel.innerHTML = '<strong id="window-label">正在確認考試時間…</strong><p id="window-date"></p><p id="countdown" aria-live="off"></p><small>考試及必填問卷皆須於當天 19:30 前完成送出（台灣時間）。</small>';
+timePanel.innerHTML = '<strong id="window-label">正在確認考試時間…</strong><p id="window-date"></p><p id="countdown" aria-live="off"></p><p id="ended-contact" hidden>若有問題請聯繫助教：<a href="mailto:d90019@nycu.edu.tw">d90019@nycu.edu.tw</a></p><small id="deadline-note">考試及必填問卷皆須於當天 19:30 前完成送出（台灣時間）。</small>';
 $('work-panel').prepend(timePanel);
 const surveyView = document.createElement('section');
 surveyView.id = 'survey-view'; surveyView.hidden = true;
@@ -31,8 +31,12 @@ function setWindow(value) {
 function tick() {
   if (finished) return;
   const w = activeWindow(), open = w.state === 'open';
-  const labels = { unknown: '正在確認考試時間…', unscheduled: '尚未設定考試日期', before: '尚未開放', open: '開放作答與問卷填寫中', paused: '講師已暫停收件', closed: '考試與問卷皆已截止' };
+  const labels = { unknown: '正在確認考試時間…', unscheduled: '尚未設定考試日期', before: '尚未開放', open: '開放作答與問卷填寫中', paused: '考試已結束', closed: '考試已結束' };
   $('window-label').textContent = labels[w.state];
+  const ended = ['paused', 'closed'].includes(w.state);
+  $('ended-contact').hidden = !ended;
+  $('deadline-note').hidden = ended;
+  $('window-date').hidden = ended;
   $('window-date').textContent = w.opensAt ? new Date(w.opensAt).toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit' }) + ' · ' + new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(w.opensAt)) + '–19:30（台灣時間）' : '';
   if (open) {
     const seconds = Math.max(0, Math.floor((Date.parse(w.closesAt) - w.now) / 1000));
