@@ -37,14 +37,15 @@ export function examWindow(exam) {
 }
 export function requireOpen(exam) {
   const state = examWindow(exam).state;
-  const messages = { unscheduled: '尚未設定考試日期，請聯絡講師。', before: '尚未到開放時間，請於指定日期 18:30 再進入。', closed: '已超過 19:30，考試與問卷皆已截止。', paused: '講師已暫停收件，請聯絡講師。' };
+  const messages = { unscheduled: '尚未設定考試日期，請聯絡講師。', before: '尚未到開放時間，請於頁面顯示的開放時間再進入。', closed: '已超過 19:30，考試與問卷皆已截止。', paused: '講師已暫停收件，請聯絡講師。' };
   if (state !== 'open') throw new ApiError(409, messages[state]);
 }
-export function scheduleForDate(date) {
+export function scheduleForDate(date, opensTime = '18:30') {
   if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new ApiError(400, '請選擇有效的考試日期。');
   const parsed = new Date(date + 'T00:00:00Z');
   if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) throw new ApiError(400, '請選擇有效的考試日期。');
-  return { opens_at: date + 'T18:30:00+08:00', closes_at: date + 'T19:30:00+08:00' };
+  if (typeof opensTime !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(opensTime) || opensTime >= '19:30') throw new ApiError(400, '開放時間須早於當天 19:30。');
+  return { opens_at: date + 'T' + opensTime + ':00+08:00', closes_at: date + 'T19:30:00+08:00' };
 }
 export async function sha256(value) {
   const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
@@ -77,7 +78,7 @@ export function createHandler(repository) {
       let body;
       try { body = JSON.parse(text); } catch { throw new ApiError(400, '資料格式不正確。'); }
       if (!body || typeof body !== 'object' || typeof body.examId !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(body.examId)) throw new ApiError(400, '無效的測驗場次。');
-      const admin = ['admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey', 'admin-roster', 'admin-roster-add'].includes(body.action);
+      const admin = ['admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey', 'admin-roster', 'admin-roster-add', 'admin-open-now'].includes(body.action);
       if (admin) {
         const code = request.headers.get('X-Teacher-Code') || '';
         if (code.length < 32 || code.length > 150 || !equalDigest(await sha256(code), settings.admin_hash)) throw new ApiError(401, '管理碼不正確。');
@@ -93,8 +94,12 @@ export function createHandler(repository) {
           return reply({ ok: true });
         }
         if (body.action === 'admin-roster') return reply({ rows: await repository.roster(exam.id) });
+        if (body.action === 'admin-open-now') {
+          await repository.openNow(exam.id);
+          return reply({ ok: true });
+        }
         if (body.action === 'admin-schedule') {
-          await repository.setSchedule(exam.id, scheduleForDate(body.date));
+          await repository.setSchedule(exam.id, scheduleForDate(body.date, body.opensTime));
           return reply({ ok: true });
         }
         if (body.action === 'admin-toggle') {

@@ -49,6 +49,12 @@ export function localRepository(filename, fixture, { now = () => Date.now() } = 
       return db.prepare('SELECT * FROM submissions WHERE exam_id=? ORDER BY submitted_at,student_id LIMIT ? OFFSET ?').all(examId,limit,offset).map(row=>({...row,answers:JSON.parse(row.answers),survey_complete:!!row.survey_complete}));
     },
     async surveyStats(id) {return db.prepare('SELECT item_id,choice,response_count FROM survey_counts WHERE exam_id=? ORDER BY item_id,choice').all(id);},
+    async openNow(id) {
+      const e=context(id), current=now();
+      const taipeiDay=value=>new Date(Date.parse(value)+8*3600000).toISOString().slice(0,10);
+      if(!e?.opens_at || !e.closes_at || current>=Date.parse(e.closes_at) || taipeiDay(e.closes_at)!==taipeiDay(e.server_now)) throw new ApiError(409,'僅能在考試當天、截止前立即開放；請先確認已儲存的考試日期。');
+      Object.assign(exams.get(id),{open:true,opens_at:new Date(Math.min(current,Date.parse(e.opens_at))).toISOString()});
+    },
     async setOpen(id,open) {exams.get(id).open=open;},
     async setSchedule(id,schedule) {Object.assign(exams.get(id),schedule);},
     close(){db.close();}

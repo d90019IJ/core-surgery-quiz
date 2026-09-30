@@ -9,6 +9,7 @@ export function supabaseRepository(url, key) {
       const error = await response.json().catch(() => ({}));
       if (error.code === '23505') throw new ApiError(409, '此學號已在應考名單中，請先核對現有資料。');
       const known = {
+        OPEN_NOW_UNAVAILABLE: [409, '僅能在考試當天、截止前立即開放；請先確認已儲存的考試日期。'],
         ROSTER_DENIED: [403, '姓名或學號不符合本場 B 組名單，請確認資料或聯絡講師。'],
         EXAM_CLOSED: [409, '考試與問卷未開放或已超過 19:30 截止時間。'],
         INVALID_ANSWERS: [400, '請完成所有題目後再送出。'],
@@ -49,6 +50,7 @@ export function supabaseRepository(url, key) {
     async surveyStats(examId) {
       return query('core_quiz_survey_counts?select=item_id,choice,response_count&exam_id=eq.' + eq(examId) + '&order=item_id.asc,choice.asc');
     },
+    async openNow(id) { await rpc('core_quiz_open_now', {p_exam_id:id}); },
     async setOpen(id, open) { await query('core_quiz_exams?id=eq.' + eq(id), { method: 'PATCH', body: JSON.stringify({ open }) }); },
     async setSchedule(id, schedule) { await query('core_quiz_exams?id=eq.' + eq(id), { method: 'PATCH', body: JSON.stringify(schedule) }); }
   };

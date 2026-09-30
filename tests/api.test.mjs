@@ -151,3 +151,32 @@ test('only teachers may add eligible students; duplicates never overwrite',async
  assert.equal((await call({action:'start',name:'補登同學',studentId:'NEW123'})).status,200);
  assert.equal((await call({action:'admin-roster'},code)).body.rows.length,3);
 });
+
+test('teachers may open early only on exam day; cutoff and previous attempts remain',async t=>{
+ const {call,setTime}=await setup(t);
+ setTime('2026-09-30T17:00:00+08:00');
+ assert.equal((await call({action:'admin-open-now'})).status,401);
+ assert.equal((await call({action:'start'})).status,409);
+ assert.equal((await call({action:'admin-open-now'},code)).status,200);
+ assert.equal((await call({action:'start'})).status,200);
+ const w=(await call({action:'info'})).body.window;
+ assert.equal(Date.parse(w.opensAt),Date.parse('2026-09-30T17:00:00+08:00'));
+ assert.equal(Date.parse(w.closesAt),Date.parse('2026-09-30T19:30:00+08:00'));
+ await call({action:'submit',answers:quiz});
+ await call({action:'admin-open-now'},code);
+ assert.equal((await call({action:'start'})).body.submitted,true);
+ setTime('2026-09-30T19:30:00+08:00');
+ assert.equal((await call({action:'admin-open-now'},code)).status,409);
+ setTime('2026-09-29T17:00:00+08:00');
+ assert.equal((await call({action:'admin-open-now'},code)).status,409);
+});
+test('custom opening time validates and preserves fixed cutoff',async t=>{
+ const {call,setTime}=await setup(t);
+ for(const opensTime of ['19:30','23:00','8:00','no',null])
+  assert.equal((await call({action:'admin-schedule',date:'2026-09-30',opensTime},code)).status,400);
+ assert.equal((await call({action:'admin-schedule',date:'2026-09-30',opensTime:'17:15'},code)).status,200);
+ setTime('2026-09-30T17:14:59+08:00');
+ assert.equal((await call({action:'start'})).status,409);
+ setTime('2026-09-30T17:15:00+08:00');
+ assert.equal((await call({action:'start'})).status,200);
+});
