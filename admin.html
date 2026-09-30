@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>講師管理｜核心外科講堂</title><link rel="icon" href="./favicon.svg"><link rel="stylesheet" href="./style.css?v=3"></head>
+<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>講師管理｜核心外科講堂</title><link rel="icon" href="./favicon.svg"><link rel="stylesheet" href="./style.css?v=4"></head>
 <body>
 <div id="preview-notice" class="preview-notice" hidden>本機預覽 · 非正式考試，資料只儲存在這台電腦</div>
 <header class="site-header"><div class="brand"><span class="brand-mark" aria-hidden="true">＋</span><span>核心外科講堂<small>CORE SURGERY</small></span></div><span class="header-label">講師管理</span></header>
@@ -11,8 +11,8 @@
     <p id="admin-error" class="error" role="alert"></p>
     <div class="table-wrap"><table><thead><tr><th>姓名</th><th>學號</th><th>交卷時間</th><th>得分</th><th>作答選項</th><th>課程完成狀態</th></tr></thead><tbody id="records"></tbody></table><p id="empty" class="empty" hidden>目前尚無交卷紀錄</p></div>
     <p class="muted">CSV 可使用 Excel 開啟。恢復收件仍受日期與時間限制，已交卷的學號無法重考。</p>
-    <section class="schedule-card"><h2>B 組應考名單</h2><p id="roster-count"></p><details><summary>查看名單</summary><div class="table-wrap"><table><thead><tr><th>學號</th><th>姓名</th></tr></thead><tbody id="roster"></tbody></table></div></details></section>
+    <section class="schedule-card"><h2>考試名單｜陽明交大醫學系117級B組</h2><p id="roster-count"></p><form id="roster-add-form"><h3>補登應考同學</h3><p class="muted">請先確認為陽明交大醫學系117級B組同學，再填寫正確姓名與學號。補登後即可依原訂時間進入本場考試。</p><label for="roster-name">姓名</label><input id="roster-name" maxlength="60" required autocomplete="off"><label for="roster-student-id">學號</label><input id="roster-student-id" maxlength="32" required autocomplete="off"><button class="primary" type="submit">新增至考試名單</button><p id="roster-message" role="status"></p><p id="roster-error" class="error" role="alert"></p></form><details open><summary>查看考試名單</summary><div class="table-wrap"><table><thead><tr><th>學號</th><th>姓名</th></tr></thead><tbody id="roster"></tbody></table></div></details></section>
     <section class="survey-summary"><h2>匿名課後問卷</h2><p id="survey-release-note" class="muted"></p><button id="export-survey" class="secondary" hidden>匯出匿名問卷統計</button><div id="survey-statistics" class="survey-stats"></div></section>
   </section>
-</main><script src="./config.js?v=3"></script><script type="module" src="./admin.js?v=3"></script>
+</main><script src="./config.js?v=4"></script><script type="module" src="./admin.js?v=4"></script>
 </body></html>

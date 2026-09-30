@@ -62,7 +62,7 @@ $('admin-login').addEventListener('submit',event=>{
 });
 $('refresh').addEventListener('click',()=>run(refresh));
 $('logout').addEventListener('click',()=>{
-  $('roster').replaceChildren();$('roster-count').textContent='';code='';rows=[];exam=null;stats=null;$('records').replaceChildren();$('survey-statistics').replaceChildren();$('teacher-code').value='';
+  $('roster-add-form').reset();$('roster-message').textContent='';$('roster-error').textContent='';$('roster').replaceChildren();$('roster-count').textContent='';code='';rows=[];exam=null;stats=null;$('records').replaceChildren();$('survey-statistics').replaceChildren();$('teacher-code').value='';
   $('dashboard').hidden=true;$('login-view').hidden=false;
 });
 $('toggle-exam').addEventListener('click',()=>{
@@ -93,3 +93,15 @@ $('export-survey').addEventListener('click',()=>run(async()=>{
   download([['題目','選項','人數'],...stats.questions.flatMap(q=>q.options.map((option,choice)=>[q.text,option,stats.counts.find(row=>row.item_id===q.id&&row.choice===choice)?.response_count||0]))],
     '核心外科講堂-'+exam.id+'-匿名問卷統計.csv');
 }));
+
+$('roster-add-form').addEventListener('submit',event=>{
+  event.preventDefault();
+  const name=$('roster-name').value.trim(), studentId=$('roster-student-id').value.trim();
+  $('roster-message').textContent='';
+  run(async()=>{
+    await request('admin-roster-add',{name,studentId},code);
+    $('roster-add-form').reset();
+    $('roster-message').textContent='已新增至本場考試名單。';
+    await refresh();
+  },'roster-error');
+});
