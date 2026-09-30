@@ -8,6 +8,7 @@ export function supabaseRepository(url, key) {
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       const known = {
+        ROSTER_DENIED: [403, '姓名或學號不符合本場 B 組名單，請確認資料或聯絡講師。'],
         EXAM_CLOSED: [409, '考試與問卷未開放或已超過 19:30 截止時間。'],
         INVALID_ANSWERS: [400, '請完成所有題目後再送出。'],
         QUIZ_REQUIRED: [409, '請先完成考試並交卷，再填寫問卷。']
@@ -27,6 +28,8 @@ export function supabaseRepository(url, key) {
       return rows[0];
     },
     async exam(id) { return rpc('core_quiz_context', { p_exam_id: id }); },
+    async authorize(examId, identity) { return rpc('core_quiz_authorize', {p_exam_id:examId,p_student_id:identity.studentId,p_name:identity.name}); },
+    async roster(examId) { return query('core_quiz_roster?select=student_id,name,group_name&exam_id=eq.' + eq(examId) + '&order=student_id.asc&limit=1000'); },
     async submission(examId, studentId) {
       return (await query('core_quiz_submissions?select=survey_complete&exam_id=eq.' + eq(examId) + '&student_id=eq.' + eq(studentId) + '&limit=1'))[0];
     },

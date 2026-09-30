@@ -4,7 +4,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="核心外科講堂隨堂測驗">
   <title>核心外科講堂｜隨堂測驗</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=2">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=3">
 </head>
 <body>
   <div id="preview-notice" class="preview-notice" hidden>本機預覽 · 非正式考試，資料只儲存在這台電腦</div>
@@ -20,7 +20,7 @@
     <section class="work-panel" id="work-panel" aria-live="polite">
       <section id="identity-view">
         <div class="section-top"><span class="eyebrow">準備開始</span><span class="pill">單次作答</span></div>
-        <h2>先填寫你的資料</h2><p class="muted intro">姓名與學號將用於課程出席及成績紀錄。</p>
+        <h2>先填寫你的資料</h2><p class="muted intro">本場僅限 B 組同學參加，姓名與學號須與分組名單一致。</p>
         <form id="identity-form">
           <label for="student-name">姓名</label><input id="student-name" name="name" autocomplete="name" maxlength="60" placeholder="請輸入姓名" required>
           <label for="student-id">學號</label><input id="student-id" name="studentId" autocapitalize="characters" autocomplete="off" maxlength="32" placeholder="請輸入學號" required aria-describedby="id-note">
@@ -38,6 +38,6 @@
   </main>
   <footer id="page-footer">核心外科講堂 · 隨堂測驗</footer>
   <dialog id="submit-dialog" aria-labelledby="dialog-title"><h2 id="dialog-title">確認交卷？</h2><p id="confirm-identity"></p><p class="muted">交卷後無法修改或再次作答。</p><div class="dialog-actions"><button id="cancel-submit" class="secondary">返回檢查</button><button id="confirm-submit" class="primary">確認交卷</button></div></dialog>
-  <script src="./config.js?v=2"></script><script type="module" src="./app.js?v=2"></script>
+  <script src="./config.js?v=3"></script><script type="module" src="./app.js?v=3"></script>
 </body>
 </html>

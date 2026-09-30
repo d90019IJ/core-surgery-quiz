@@ -5,6 +5,7 @@ declare eid text := 'sql-qa-' || gen_random_uuid()::text; n integer; done boolea
 begin
   insert into public.core_quiz_exams(id,title,open,questions,answer_key,opens_at,closes_at)
     values(eid,'Synthetic boundary test',true,'[{"id":"q1","text":"Synthetic","options":["A","B"]}]','{"q1":0}',clock_timestamp()-interval '1 minute',clock_timestamp()+interval '1 minute');
+  insert into public.core_quiz_roster(exam_id,student_id,name,group_name) select eid,id,'Synthetic','B' from unnest(array['A','B','C']) as id;
   perform public.core_quiz_submit(eid,'A','Synthetic','{"q1":0}');
   begin
     perform public.core_quiz_survey_submit(eid,'A','{"s1":0,"s2":0,"s3":0,"s4":0,"s5":9}');

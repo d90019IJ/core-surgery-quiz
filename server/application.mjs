@@ -77,7 +77,7 @@ export function createHandler(repository) {
       let body;
       try { body = JSON.parse(text); } catch { throw new ApiError(400, '資料格式不正確。'); }
       if (!body || typeof body !== 'object' || typeof body.examId !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(body.examId)) throw new ApiError(400, '無效的測驗場次。');
-      const admin = ['admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey'].includes(body.action);
+      const admin = ['admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey', 'admin-roster'].includes(body.action);
       if (admin) {
         const code = request.headers.get('X-Teacher-Code') || '';
         if (code.length < 32 || code.length > 150 || !equalDigest(await sha256(code), settings.admin_hash)) throw new ApiError(401, '管理碼不正確。');
@@ -87,6 +87,7 @@ export function createHandler(repository) {
       const window = examWindow(exam);
       if (body.action === 'info') return reply({ title: exam.title, window });
       if (admin) {
+        if (body.action === 'admin-roster') return reply({ rows: await repository.roster(exam.id) });
         if (body.action === 'admin-schedule') {
           await repository.setSchedule(exam.id, scheduleForDate(body.date));
           return reply({ ok: true });
@@ -108,6 +109,9 @@ export function createHandler(repository) {
         return reply({ exam: { id: exam.id, title: exam.title, open: exam.open, window }, rows: rows.slice(0, 500), hasMore: rows.length > 500 });
       }
       const identity = normalizeIdentity(body.name, body.studentId);
+      const canonicalName = await repository.authorize(exam.id, identity);
+      if (!canonicalName) throw new ApiError(403, '姓名或學號不符合本場 B 組名單，請確認資料或聯絡講師。');
+      identity.name = canonicalName;
       let record = await repository.submission(exam.id, identity.studentId);
       const receipt = async () => {
         const latestExam = await repository.exam(exam.id);

@@ -7,6 +7,8 @@
 
 每場有指定日期，台灣時間 18:30 開放，19:30 同時截止考試及必填問卷。日期可在講師後台設定，未設定日期時不開放。暫停／恢復收件仍受時間限制，不會讓過期場次重新開放。
 
+本場僅限 B 組名單中的學員，姓名與學號經伺服器核對相符才可進入考試或問卷。名單保存於受保護資料庫，講師可在後台查看；不公開於 GitHub。空名單的場次不允許進入。
+
 學員填寫姓名及本人學號，完成五題單選題、交卷後填寫五項必填課後問卷。只有兩者皆成功送出，才算完成課程。交卷不顯示分數、正確答案或解析。問卷送出後顯示「問卷已送出」與課程完成確認。
 
 - 同一場次同一學號只儲存第一份成功交卷，禁止覆寫或重考。
@@ -43,7 +45,7 @@ web/ 透過 GitHub Pages 的 gh-pages 分支發布；server/ 是 Supabase Edge F
 
 ## 初始化及升級
 
-新專案依序執行 database/schema.sql 及 database/schedule-survey.sql。既有第一版專案只執行後者一次。既有交卷保留，問卷完成狀態初始為 false。
+新專案依序執行 database/schema.sql、database/schedule-survey.sql 及 database/roster.sql。既有專案只執行尚未套用的遷移一次。名單由私有來源匯入 core_quiz_roster，不能把實際姓名學號寫入公開 SQL。既有交卷保留，問卷完成狀態初始為 false。
 
 部署 server/index.ts、application.mjs、supabase-repository.mjs、deno.json。更新既有 Edge Function 時明確指定 import_map_path 為 deno.json。學生依需求採自填身分，因此 verify_jwt=false；講師操作仍由函式內專用管理碼驗證。
 
@@ -59,6 +61,6 @@ tests/api.test.mjs 驗證精確開始／截止邊界、日期、權限、重送�
 
 ## 下一場考試
 
-新增獨立的 core_quiz_exams 場次 ID，使用 ?exam=場次ID 的學員及講師網址，舊成績保留。更改既有日期不會重置學號作答機會；下一次考試應建立新場次。不要修改已收卷場次的題目或答案。
+新增獨立的 core_quiz_exams 場次 ID，並匯入該場的應考名單，使用 ?exam=場次ID 的學員及講師網址，舊成績保留。更改既有日期不會重置學號作答機會；下一次考試應建立新場次。不要修改已收卷場次的題目或答案。
 
 考試題目原文及答案依講師提供的五張截圖輸入，未自行改判。2024 年講義僅供課程參考，未公開發布。

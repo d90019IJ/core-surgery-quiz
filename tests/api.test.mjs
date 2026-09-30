@@ -6,7 +6,7 @@ const code='test-only-teacher-code-32-characters-minimum';
 const quiz={q1:0,q2:1}, survey={s1:0,s2:1,s3:2,s4:3,s5:4};
 async function setup(t) {
   let now=Date.parse('2026-09-30T18:45:00+08:00');
-  const fixture={settings:{admin_hash:await sha256(code),allowed_origins:['https://school.example']},exams:[{id:'exam-one',title:'Synthetic test',open:true,opens_at:'2026-09-30T18:30:00+08:00',closes_at:'2026-09-30T19:30:00+08:00',questions:[{id:'q1',text:'A?',options:['A','B']},{id:'q2',text:'B?',options:['A','B']}],answer_key:quiz}]};
+  const fixture={roster:['A123','B123'].map(student_id=>({exam_id:'exam-one',student_id,name:'測試學員',group_name:'B'})),settings:{admin_hash:await sha256(code),allowed_origins:['https://school.example']},exams:[{id:'exam-one',title:'Synthetic test',open:true,opens_at:'2026-09-30T18:30:00+08:00',closes_at:'2026-09-30T19:30:00+08:00',questions:[{id:'q1',text:'A?',options:['A','B']},{id:'q2',text:'B?',options:['A','B']}],answer_key:quiz}]};
   const repo=localRepository(':memory:',fixture,{now:()=>now});
   t.after(()=>repo.close());const handler=createHandler(repo);
   const call=async(body,teacher='',origin='https://school.example')=>{
@@ -72,7 +72,7 @@ test('anonymous statistics have no identity fields; completion is separate and a
 });
 test('resume pending questionnaire without retaking; completed request retries are safe',async t=>{
   const {call}=await setup(t);await call({action:'submit',answers:quiz});
-  const resumed=await call({action:'start',studentId:' ａ１２３ ',name:'改名'});
+  const resumed=await call({action:'start',studentId:' ａ１２３ ',name:' 測試學員 '});
   assert.equal(resumed.body.submitted,true);assert.equal(resumed.body.questions,undefined);assert.equal(resumed.body.survey.length,5);
   await call({action:'survey-submit',answers:survey});
   assert.equal((await call({action:'start'})).body.surveyComplete,true);
@@ -94,7 +94,7 @@ test('bad answers and unknown actions cannot write',async t=>{
 });
 test('all teacher endpoints require a valid code; dates are validated and fixed to Taipei time',async t=>{
   const {call}=await setup(t);
-  for(const action of ['admin-list','admin-toggle','admin-schedule','admin-survey'])assert.equal((await call({action,date:'2026-10-01',open:true})).status,401);
+  for(const action of ['admin-list','admin-toggle','admin-schedule','admin-survey','admin-roster'])assert.equal((await call({action,date:'2026-10-01',open:true})).status,401);
   assert.equal((await call({action:'admin-schedule',date:'2026-02-30'},code)).status,400);
   assert.equal((await call({action:'admin-schedule',date:'2026-10-01'},code)).status,200);
   const w=(await call({action:'info'})).body.window;
@@ -117,4 +117,25 @@ test('authoritative write rechecks time after an earlier successful read',async 
   repo.submit=async(...args)=>{setTime('2026-09-30T19:30:00+08:00');return original(...args);};
   assert.equal((await call({action:'submit',answers:quiz})).status,409);
   assert.equal((await call({action:'admin-list'},code)).body.rows.length,0);
+});
+
+test('roster blocks unknown IDs and mismatched names on every student action, including receipts',async t=>{
+  const {call,repo}=await setup(t);
+  for(const action of ['start','submit','survey-submit']){
+    for(const identity of [{studentId:'OUTSIDE'},{name:'其他姓名'}]){
+      const r=await call({action,...identity,answers:action==='survey-submit'?survey:quiz});
+      assert.equal(r.status,403);assert.deepEqual(Object.keys(r.body),['error']);
+    }
+  }
+  assert.equal((await call({action:'start',studentId:' ａ１２３ ',name:' 測試學員 '})).status,200);
+  await call({action:'submit',answers:quiz});
+  assert.equal((await call({action:'start',name:'冒用'})).status,403);
+  assert.equal((await call({action:'survey-submit',name:'冒用',answers:survey})).status,403);
+  assert.equal((await repo.surveyStats('exam-one')).length,0);
+  repo.db.prepare('INSERT INTO submissions VALUES(?,?,?,?,?,?,?)').run('exam-one','OUTSIDE','測試學員','{}',0,'2026-09-30T10:35:00Z',0);
+  assert.equal((await call({action:'start',studentId:'OUTSIDE'})).status,403);
+  assert.equal((await call({action:'survey-submit',studentId:'OUTSIDE',answers:survey})).status,403);
+  assert.equal((await call({action:'admin-list'},code)).body.rows.length,2);
+  assert.equal((await call({action:'admin-roster'},code)).body.rows.length,2);
+  assert.equal((await call({action:'info'})).body.rows,undefined);
 });

@@ -9,6 +9,8 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const seed = resolve(root, 'private/seed.json');
 if (!existsSync(seed)) throw new Error('Local preview requires private/seed.json; see README.');
 const fixture = JSON.parse(readFileSync(seed, 'utf8'));
+const rosterPath=resolve(root,'private/b-roster.json');
+if (!fixture.roster && existsSync(rosterPath)) fixture.roster=JSON.parse(readFileSync(rosterPath,'utf8')).students.map(row=>({...row,exam_id:fixture.exams[0].id}));
 const port = Number(process.env.PORT || 4173);
 fixture.settings.allowed_origins = [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
 const previewBase=process.env.PREVIEW_CLOCK ? Date.parse(process.env.PREVIEW_CLOCK) : null;

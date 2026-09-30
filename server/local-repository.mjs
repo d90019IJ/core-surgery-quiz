@@ -11,6 +11,10 @@ export function localRepository(filename, fixture, { now = () => Date.now() } = 
     db,
     async settings() { return fixture.settings; },
     async exam(id) { return context(id); },
+    async authorize(examId, identity) {
+      return (fixture.roster || []).find(r=>r.exam_id===examId && r.student_id===identity.studentId && r.name===identity.name)?.name || null;
+    },
+    async roster(examId) { return (fixture.roster || []).filter(r=>r.exam_id===examId).map(({student_id,name,group_name})=>({student_id,name,group_name})); },
     async submission(examId, studentId) {
       const row = db.prepare('SELECT survey_complete FROM submissions WHERE exam_id=? AND student_id=?').get(examId,studentId);
       return row ? {survey_complete:!!row.survey_complete} : undefined;
