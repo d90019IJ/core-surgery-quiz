@@ -86,7 +86,7 @@ export function createHandler(repository) {
       const exam = await repository.exam(body.examId);
       if (!exam) throw new ApiError(404, '找不到此場測驗，請確認講師提供的網址。');
       const window = examWindow(exam);
-      if (body.action === 'info') return reply({ title: exam.title, window });
+      if (body.action === 'info') return reply({ title: exam.title, questionCount: exam.questions.length, window });
       if (admin) {
         if (body.action === 'admin-roster-add') {
           const identity = normalizeIdentity(body.name, body.studentId);
@@ -141,7 +141,7 @@ export function createHandler(repository) {
       }
       if (record) return receipt();
       requireOpen(exam);
-      if (body.action === 'start') return reply({ title: exam.title, identity, window, questions: exam.questions.map(q => ({ id: q.id, text: q.text, options: q.options })) });
+      if (body.action === 'start') return reply({ title: exam.title, identity, window, questions: exam.questions.map(q => ({ id: q.id, text: q.text, options: q.options, ...(q.table ? {table:q.table} : {}) })) });
       await repository.submit(exam.id, identity, validateAnswers(body.answers, exam.questions));
       record = await repository.submission(exam.id, identity.studentId);
       return receipt();

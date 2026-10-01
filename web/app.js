@@ -58,7 +58,7 @@ function tick() {
 async function syncInfo() {
   if (finished || syncBusy) return;
   syncBusy = true;
-  try { const result = await request('info'); setWindow(result.window); }
+  try { const result = await request('info'); setWindow(result.window); $('course-title').textContent = result.title; $('question-count').textContent = String(result.questionCount ?? 5).padStart(2,'0'); }
   catch (error) { if (!clock) $('identity-error').textContent = error.message; }
   finally { syncBusy = false; }
 }
@@ -103,6 +103,16 @@ function renderQuestions(target, items) {
     const number = document.createElement('span'); number.className = 'question-number';
     number.textContent = (target === 'questions' ? 'QUESTION ' : '問卷 ') + String(index + 1).padStart(2, '0');
     legend.append(number, document.createTextNode(question.text)); fieldset.append(legend);
+    if (question.table) {
+      const wrap=document.createElement('div');wrap.className='question-table-wrap';wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','輸液成分表，可左右滑動');
+      const table=document.createElement('table');
+      const caption=document.createElement('caption');caption.textContent='輸液成分表（可左右滑動）';table.append(caption);
+      const head=document.createElement('thead'),hr=document.createElement('tr');
+      for(const label of question.table.headers){const th=document.createElement('th');th.scope='col';th.textContent=label;hr.append(th);}head.append(hr);table.append(head);
+      const body=document.createElement('tbody');
+      for(const row of question.table.rows){const tr=document.createElement('tr');row.forEach((value,index)=>{const cell=document.createElement(index===0?'th':'td');if(index===0)cell.scope='row';cell.textContent=value;tr.append(cell);});body.append(tr);}
+      table.append(body);wrap.append(table);fieldset.append(wrap);
+    }
     question.options.forEach((option, choice) => {
       const label = document.createElement('label'); label.className = 'option';
       const input = document.createElement('input'); input.type = 'radio'; input.name = question.id; input.value = choice; input.required = true;
