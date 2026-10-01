@@ -1,5 +1,5 @@
 // Public endpoint only; never put answers or privileged keys in browser files.
 window.QUIZ_CONFIG = {
   apiUrl: "https://sezqyuztaqguotemsdoa.supabase.co/functions/v1/core-surgery-quiz",
-  examId: "organ-transplant-2024-01"
+  examId: "clinical-fluids-2026-10-07"
 };
