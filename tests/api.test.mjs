@@ -180,3 +180,5 @@ test('custom opening time validates and preserves fixed cutoff',async t=>{
  setTime('2026-09-30T17:15:00+08:00');
  assert.equal((await call({action:'start'})).status,200);
 });
+
+test('preview requires teacher code, omits answers, works before opening and makes no attempts',async t=>{const {call,setTime}=await setup(t);setTime('2026-09-29T17:00:00+08:00');assert.equal((await call({action:'admin-preview'})).status,401);const r=await call({action:'admin-preview'},code);assert.equal(r.status,200);assert.equal(r.body.questions.length,2);assert.equal(r.body.answer_key,undefined);assert.equal(r.body.score,undefined);assert.equal((await call({action:'admin-list'},code)).body.rows.length,0);});
