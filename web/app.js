@@ -1,3 +1,4 @@
+import {addQuestionImage} from './question-media.js?v=1';
 import { request, currentExam } from './api.js';
 currentExam();
 const $ = id => document.getElementById(id);
@@ -103,6 +104,7 @@ function renderQuestions(target, items) {
     const number = document.createElement('span'); number.className = 'question-number';
     number.textContent = (target === 'questions' ? 'QUESTION ' : '問卷 ') + String(index + 1).padStart(2, '0');
     legend.append(number, document.createTextNode(question.text)); fieldset.append(legend);
+    addQuestionImage(fieldset, question.image);
     if (question.table) {
       const wrap=document.createElement('div');wrap.className='question-table-wrap';wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','輸液成分表，可左右滑動');
       const table=document.createElement('table');

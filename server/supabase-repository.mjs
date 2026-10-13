@@ -10,6 +10,7 @@ export function supabaseRepository(url, key) {
       if (error.code === '23505') throw new ApiError(409, '此學號已在應考名單中，請先核對現有資料。');
       const known = {
         OPEN_NOW_UNAVAILABLE: [409, '僅能在考試當天、截止前立即開放；請先確認已儲存的考試日期。'],
+        ASSIGNMENT_REQUIRED: [409, '請重新進入本場考試以載入固定題組。'],
         ROSTER_DENIED: [403, '姓名或學號不符合本場 B 組名單，請確認資料或聯絡講師。'],
         EXAM_CLOSED: [409, '考試與問卷未開放或已超過 19:30 截止時間。'],
         INVALID_ANSWERS: [400, '請完成所有題目後再送出。'],
@@ -29,6 +30,9 @@ export function supabaseRepository(url, key) {
       if (!rows?.length) throw new Error('Quiz not configured');
       return rows[0];
     },
+    async answerKey(id) { return (await query('core_quiz_exams?select=answer_key&id=eq.'+eq(id)+'&limit=1'))[0].answer_key; },
+    async previewQuestions(id) { return rpc('core_quiz_pick_questions',{p_exam_id:id}); },
+    async assignedQuestions(id,identity) { return rpc('core_quiz_assign',{p_exam_id:id,p_student_id:identity.studentId,p_name:identity.name}); },
     async exam(id) { return rpc('core_quiz_context', { p_exam_id: id }); },
     async addRoster(examId, identity) {
       await query('core_quiz_roster', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({exam_id:examId,student_id:identity.studentId,name:identity.name,group_name:'B'})});
@@ -45,7 +49,7 @@ export function supabaseRepository(url, key) {
       await rpc('core_quiz_survey_submit', { p_exam_id: examId, p_student_id: studentId, p_answers: answers });
     },
     async list(examId, offset, limit) {
-      return query('core_quiz_submissions?select=name,student_id,submitted_at,score,answers,survey_complete&exam_id=eq.' + eq(examId) + '&order=submitted_at.asc,student_id.asc&offset=' + offset + '&limit=' + limit);
+      return query('core_quiz_submissions?select=name,student_id,submitted_at,score,answers,survey_complete,question_ids&exam_id=eq.' + eq(examId) + '&order=submitted_at.asc,student_id.asc&offset=' + offset + '&limit=' + limit);
     },
     async surveyStats(examId) {
       return query('core_quiz_survey_counts?select=item_id,choice,response_count&exam_id=eq.' + eq(examId) + '&order=item_id.asc,choice.asc');

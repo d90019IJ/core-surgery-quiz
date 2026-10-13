@@ -4,7 +4,8 @@ const $ = id => document.getElementById(id);
 let code = '', rows = [], exam = null, stats = null, busy = false;
 if (window.QUIZ_CONFIG.preview) $('preview-notice').hidden = false;
 const time = value => new Date(value).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-const choices = answers => Object.entries(answers).sort(([a],[b]) => a.localeCompare(b)).map(([q,a]) => q.toUpperCase()+':'+String.fromCharCode(65+a)).join(' / ');
+const questionIds = row => row.question_ids || Object.keys(row.answers).sort();
+const choices = row => questionIds(row).map(q=>q.toUpperCase()+':'+String.fromCharCode(65+row.answers[q])).join(' / ');
 const statusText = row => row.survey_complete ? '已完成課程' : '已交卷／問卷未完成';
 const stateText = {unscheduled:'尚未設定日期',before:'尚未到開放時間',open:'開放考試與問卷',paused:'已暫停收件',closed:'考試與問卷已截止'};
 function renderStats() {
@@ -35,6 +36,7 @@ async function refresh() {
     return tr;
   }));
   $('admin-title').textContent = exam.title;
+  $('exam-preview-link').href='./preview.html?exam='+encodeURIComponent(exam.id);
   $('exam-status').textContent = exam.id + ' · ' + stateText[exam.window.state];
   $('toggle-exam').textContent = exam.open ? '暫停收件' : '恢復定時收件';
   $('exam-date').value = exam.window.opensAt ? new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(exam.window.opensAt)) : '';
@@ -43,7 +45,7 @@ async function refresh() {
   $('record-count').textContent = rows.length + ' 人已交卷 · ' + complete + ' 人完成課程 · ' + (rows.length-complete) + ' 人問卷未完成';
   $('records').replaceChildren(...rows.map(row => {
     const tr = document.createElement('tr');
-    for (const value of [row.name,row.student_id,time(row.submitted_at),row.score,choices(row.answers),statusText(row)]) {
+    for (const value of [row.name,row.student_id,time(row.submitted_at),row.score,choices(row),statusText(row)]) {
       const td = document.createElement('td'); td.textContent = value; tr.append(td);
     }
     return tr;
@@ -85,8 +87,8 @@ function download(data,name) {
 }
 $('export').addEventListener('click',()=>run(async()=>{
   await refresh();
-  download([['測驗場次','姓名','學號','交卷時間（台北）','得分','Q1','Q2','Q3','Q4','Q5','問卷完成','課程狀態'],
-    ...rows.map(row=>[exam.id,row.name,"'"+row.student_id,time(row.submitted_at),row.score,...['q1','q2','q3','q4','q5'].map(q=>String.fromCharCode(65+row.answers[q])),row.survey_complete?'是':'否',statusText(row)])],
+  download([['測驗場次','姓名','學號','交卷時間（台北）','得分','題組（依顯示順序）','第1題','第2題','第3題','第4題','第5題','問卷完成','課程狀態'],
+    ...rows.map(row=>[exam.id,row.name,"'"+row.student_id,time(row.submitted_at),row.score,questionIds(row).join(' / '),...questionIds(row).map(q=>String.fromCharCode(65+row.answers[q])),row.survey_complete?'是':'否',statusText(row)])],
     '核心外科講堂-'+exam.id+'-成績與完成狀態.csv');
 }));
 $('export-survey').addEventListener('click',()=>run(async()=>{

@@ -57,6 +57,9 @@ function equalDigest(a, b) {
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
+export function publicQuestions(questions) {
+  return questions.map(q=>({id:q.id,text:q.text,options:q.options,...(q.table?{table:q.table}:{}),...(q.image?{image:q.image}:{})}));
+}
 export function createHandler(repository) {
   return async function handle(request) {
     const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Vary': 'Origin', 'X-Content-Type-Options': 'nosniff' };
@@ -78,7 +81,7 @@ export function createHandler(repository) {
       let body;
       try { body = JSON.parse(text); } catch { throw new ApiError(400, '資料格式不正確。'); }
       if (!body || typeof body !== 'object' || typeof body.examId !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(body.examId)) throw new ApiError(400, '無效的測驗場次。');
-      const admin = ['admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey', 'admin-roster', 'admin-roster-add', 'admin-open-now', 'admin-preview'].includes(body.action);
+      const admin = ['admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey', 'admin-roster', 'admin-roster-add', 'admin-open-now', 'admin-preview', 'admin-bank'].includes(body.action);
       if (admin) {
         const code = request.headers.get('X-Teacher-Code') || '';
         if (code.length < 32 || code.length > 150 || !equalDigest(await sha256(code), settings.admin_hash)) throw new ApiError(401, '管理碼不正確。');
@@ -86,9 +89,16 @@ export function createHandler(repository) {
       const exam = await repository.exam(body.examId);
       if (!exam) throw new ApiError(404, '找不到此場測驗，請確認講師提供的網址。');
       const window = examWindow(exam);
-      if (body.action === 'info') return reply({ title: exam.title, questionCount: exam.questions.length, window });
+      if (body.action === 'info') return reply({ title: exam.title, questionCount: exam.assignment_rules ? exam.assignment_rules.reduce((sum,rule)=>sum+rule.count,0) : exam.questions.length, window });
       if (admin) {
-        if (body.action === 'admin-preview') return reply({title:exam.title, questions:exam.questions.map(q=>({id:q.id,text:q.text,options:q.options,...(q.table?{table:q.table}:{})}))});
+        if (body.action === 'admin-preview') {
+          const selected = exam.assignment_rules ? await repository.previewQuestions(exam.id) : exam.questions;
+          return reply({title:exam.title,randomized:!!exam.assignment_rules,questions:publicQuestions(selected)});
+        }
+        if (body.action === 'admin-bank') {
+          const keys=await repository.answerKey(exam.id);
+          return reply({title:exam.title,bank:true,randomized:!!exam.assignment_rules,questions:exam.questions.map(q=>({...publicQuestions([q])[0],review:{...q.review,answer:keys[q.id]}}))});
+        }
         if (body.action === 'admin-roster-add') {
           const identity = normalizeIdentity(body.name, body.studentId);
           await repository.addRoster(exam.id, identity);
@@ -142,8 +152,9 @@ export function createHandler(repository) {
       }
       if (record) return receipt();
       requireOpen(exam);
-      if (body.action === 'start') return reply({ title: exam.title, identity, window, questions: exam.questions.map(q => ({ id: q.id, text: q.text, options: q.options, ...(q.table ? {table:q.table} : {}) })) });
-      await repository.submit(exam.id, identity, validateAnswers(body.answers, exam.questions));
+      const selected = exam.assignment_rules ? await repository.assignedQuestions(exam.id, identity) : exam.questions;
+      if (body.action === 'start') return reply({title:exam.title,identity,window,questions:publicQuestions(selected)});
+      await repository.submit(exam.id, identity, validateAnswers(body.answers, selected));
       record = await repository.submission(exam.id, identity.studentId);
       return receipt();
     } catch (error) {

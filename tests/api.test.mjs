@@ -132,7 +132,7 @@ test('roster blocks unknown IDs and mismatched names on every student action, in
   assert.equal((await call({action:'start',name:'冒用'})).status,403);
   assert.equal((await call({action:'survey-submit',name:'冒用',answers:survey})).status,403);
   assert.equal((await repo.surveyStats('exam-one')).length,0);
-  repo.db.prepare('INSERT INTO submissions VALUES(?,?,?,?,?,?,?)').run('exam-one','OUTSIDE','測試學員','{}',0,'2026-09-30T10:35:00Z',0);
+  repo.db.prepare('INSERT INTO submissions(exam_id,student_id,name,answers,score,submitted_at,survey_complete) VALUES(?,?,?,?,?,?,?)').run('exam-one','OUTSIDE','測試學員','{}',0,'2026-09-30T10:35:00Z',0);
   assert.equal((await call({action:'start',studentId:'OUTSIDE'})).status,403);
   assert.equal((await call({action:'survey-submit',studentId:'OUTSIDE',answers:survey})).status,403);
   assert.equal((await call({action:'admin-list'},code)).body.rows.length,2);
