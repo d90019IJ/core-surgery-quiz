@@ -104,6 +104,7 @@ function renderQuestions(target, items) {
     const number = document.createElement('span'); number.className = 'question-number';
     number.textContent = (target === 'questions' ? 'QUESTION ' : '問卷 ') + String(index + 1).padStart(2, '0');
     legend.append(number, document.createTextNode(question.text)); fieldset.append(legend);
+    if(question.type==='multiple'){const note=document.createElement('p');note.className='muted';note.textContent='複選題：請選出所有正確選項；全對才得分，多選或漏選不給分。';fieldset.append(note);}
     addQuestionImage(fieldset, question.image);
     if (question.table) {
       const wrap=document.createElement('div');wrap.className='question-table-wrap';wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','輸液成分表，可左右滑動');
@@ -117,7 +118,7 @@ function renderQuestions(target, items) {
     }
     question.options.forEach((option, choice) => {
       const label = document.createElement('label'); label.className = 'option';
-      const input = document.createElement('input'); input.type = 'radio'; input.name = question.id; input.value = choice; input.required = true;
+      const input = document.createElement('input'); input.type = question.type === 'multiple' ? 'checkbox' : 'radio'; input.name = question.id; input.value = choice; input.required = question.type !== 'multiple';
       const text = document.createElement('span'); text.className = 'option-text'; text.textContent = option;
       label.append(input, text); fieldset.append(label);
     });
@@ -126,10 +127,10 @@ function renderQuestions(target, items) {
   $(target).replaceChildren(fragment);
 }
 function answersFor(formId, items) {
-  return Object.fromEntries(items.map(q => [q.id, Number($(formId).querySelector('input[name="' + q.id + '"]:checked').value)]));
+  return Object.fromEntries(items.map(q => {const values=[...$(formId).querySelectorAll('input[name="'+q.id+'"]:checked')].map(input=>Number(input.value));return [q.id,q.type==='multiple'?values:values[0]];}));
 }
 function updateProgress() {
-  const count = $('quiz-form').querySelectorAll('input:checked').length;
+  const count = questions.filter(q=>$('quiz-form').querySelector('input[name="'+q.id+'"]:checked')).length;
   $('progress').value = count; $('progress-label').textContent = '已作答 ' + count + ' / ' + questions.length;
 }
 $('identity-form').addEventListener('submit', async event => {
@@ -149,6 +150,9 @@ $('identity-form').addEventListener('submit', async event => {
 $('quiz-form').addEventListener('change', updateProgress);
 $('quiz-form').addEventListener('submit', event => {
   event.preventDefault(); if (busy || activeWindow().state !== 'open') return;
+  const missing=questions.find(q=>!$('quiz-form').querySelector('input[name="'+q.id+'"]:checked'));
+  if(missing){$('quiz-error').textContent='請完成所有題目，複選題至少選擇一個選項。';$('quiz-form').querySelector('input[name="'+missing.id+'"]').focus();return;}
+  $('quiz-error').textContent='';
   $('confirm-identity').textContent = identity.name + ' · ' + identity.studentId + '，已完成 ' + questions.length + ' 題。交卷後還需完成必填問卷。';
   $('submit-dialog').showModal();
 });

@@ -18,11 +18,25 @@ export function normalizeIdentity(name, studentId) {
   return { name: cleanName, studentId: cleanId };
 }
 export function validateAnswers(answers, questions) {
-  if (!answers || typeof answers !== 'object' || Array.isArray(answers) || Object.keys(answers).length !== questions.length) throw new ApiError(400, '請完成所有題目後再送出。');
+  const invalid = () => { throw new ApiError(400, '請完成所有題目，複選題至少選擇一個選項。'); };
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers) || Object.keys(answers).length !== questions.length) invalid();
+  const result = {};
   for (const q of questions) {
-    if (!Object.hasOwn(answers, q.id) || !Number.isInteger(answers[q.id]) || answers[q.id] < 0 || answers[q.id] >= q.options.length) throw new ApiError(400, '請完成所有題目後再送出。');
+    const value = answers[q.id], valid = n => Number.isInteger(n) && n >= 0 && n < q.options.length;
+    if (!Object.hasOwn(answers,q.id)) invalid();
+    if (q.type === 'multiple') {
+      if (!Array.isArray(value) || !value.length || value.length > q.options.length || !value.every(valid) || new Set(value).size !== value.length) invalid();
+      result[q.id] = [...value].sort((a,b)=>a-b);
+    } else {
+      if (!valid(value)) invalid();
+      result[q.id] = value;
+    }
   }
-  return Object.fromEntries(questions.map(q => [q.id, answers[q.id]]));
+  return result;
+}
+export function answersEqual(value,key) {
+  if(Array.isArray(value) && Array.isArray(key)) return value.length === key.length && value.every(n=>key.includes(n));
+  return value === key;
 }
 export function examWindow(exam) {
   const now = Date.parse(exam.server_now);
@@ -58,7 +72,7 @@ function equalDigest(a, b) {
   return diff === 0;
 }
 export function publicQuestions(questions) {
-  return questions.map(q=>({id:q.id,text:q.text,options:q.options,...(q.table?{table:q.table}:{}),...(q.image?{image:q.image}:{})}));
+  return questions.map(q=>({id:q.id,text:q.text,options:q.options,...(q.type==='multiple'?{type:'multiple'}:{}),...(q.table?{table:q.table}:{}),...(q.image?{image:q.image}:{})}));
 }
 export function createHandler(repository) {
   return async function handle(request) {

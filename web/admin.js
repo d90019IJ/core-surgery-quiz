@@ -5,7 +5,8 @@ let code = '', rows = [], exam = null, stats = null, busy = false;
 if (window.QUIZ_CONFIG.preview) $('preview-notice').hidden = false;
 const time = value => new Date(value).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
 const questionIds = row => row.question_ids || Object.keys(row.answers).sort();
-const choices = row => questionIds(row).map(q=>q.toUpperCase()+':'+String.fromCharCode(65+row.answers[q])).join(' / ');
+const choiceLetters = value => (Array.isArray(value)?value:[value]).map(n=>String.fromCharCode(65+n)).join('+');
+const choices = row => questionIds(row).map(q=>q.toUpperCase()+':'+choiceLetters(row.answers[q])).join(' / ');
 const statusText = row => row.survey_complete ? '已完成課程' : '已交卷／問卷未完成';
 const stateText = {unscheduled:'尚未設定日期',before:'尚未到開放時間',open:'開放考試與問卷',paused:'已暫停收件',closed:'考試與問卷已截止'};
 function renderStats() {
@@ -88,7 +89,7 @@ function download(data,name) {
 $('export').addEventListener('click',()=>run(async()=>{
   await refresh();
   download([['測驗場次','姓名','學號','交卷時間（台北）','得分','題組（依顯示順序）','第1題','第2題','第3題','第4題','第5題','問卷完成','課程狀態'],
-    ...rows.map(row=>[exam.id,row.name,"'"+row.student_id,time(row.submitted_at),row.score,questionIds(row).join(' / '),...questionIds(row).map(q=>String.fromCharCode(65+row.answers[q])),row.survey_complete?'是':'否',statusText(row)])],
+    ...rows.map(row=>[exam.id,row.name,"'"+row.student_id,time(row.submitted_at),row.score,questionIds(row).join(' / '),...questionIds(row).map(q=>choiceLetters(row.answers[q])),row.survey_complete?'是':'否',statusText(row)])],
     '核心外科講堂-'+exam.id+'-成績與完成狀態.csv');
 }));
 $('export-survey').addEventListener('click',()=>run(async()=>{

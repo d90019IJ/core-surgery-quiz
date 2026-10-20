@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { ApiError, requireOpen, validateAnswers } from './application.mjs';
+import { ApiError, requireOpen, validateAnswers, answersEqual } from './application.mjs';
 export function localRepository(filename, fixture, { now = () => Date.now() } = {}) {
   const db = new DatabaseSync(filename);
   db.exec('CREATE TABLE IF NOT EXISTS submissions (exam_id TEXT NOT NULL, student_id TEXT NOT NULL, name TEXT NOT NULL, answers TEXT NOT NULL, score INTEGER NOT NULL, submitted_at TEXT NOT NULL, PRIMARY KEY(exam_id,student_id));');
@@ -51,8 +51,8 @@ export function localRepository(filename, fixture, { now = () => Date.now() } = 
       const assignment=exam.assignment_rules ? db.prepare('SELECT * FROM assignments WHERE exam_id=? AND student_id=?').get(examId,identity.studentId) : null;
       if(exam.assignment_rules&&!assignment)throw new ApiError(409,'Assignment required');
       const questions=assignment?JSON.parse(assignment.questions):exam.questions,key=assignment?JSON.parse(assignment.answer_key):exam.answer_key;
-      validateAnswers(answers,questions);
-      const correct=questions.filter(q=>answers[q.id]===key[q.id]).length;
+      answers=validateAnswers(answers,questions);
+      const correct=questions.filter(q=>answersEqual(answers[q.id],key[q.id])).length;
       db.prepare('INSERT OR IGNORE INTO submissions(exam_id,student_id,name,answers,score,submitted_at,question_ids) VALUES(?,?,?,?,?,?,?)').run(examId,identity.studentId,identity.name,JSON.stringify(answers),Math.round(correct*100/questions.length),new Date(now()).toISOString(),JSON.stringify(questions.map(q=>q.id)));
     },
     async submitSurvey(examId,studentId,answers) {
