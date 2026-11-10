@@ -103,7 +103,9 @@ export function createHandler(repository) {
       const exam = await repository.exam(body.examId);
       if (!exam) throw new ApiError(404, '找不到此場測驗，請確認講師提供的網址。');
       const window = examWindow(exam);
-      if (body.action === 'info') return reply({ title: exam.title, questionCount: exam.assignment_rules ? exam.assignment_rules.reduce((sum,rule)=>sum+rule.count,0) : exam.questions.length, window });
+      const pending = exam.questions.some(q => q.pending === true);
+      if (pending && (['start','submit','admin-preview','admin-bank','admin-open-now'].includes(body.action) || (body.action === 'admin-toggle' && body.open))) throw new ApiError(409, '本場考題尚未備妥，請聯絡助教補齊題庫後再啟用。');
+      if (body.action === 'info') return reply({ pending, title: exam.title, questionCount: pending ? 0 : exam.assignment_rules ? exam.assignment_rules.reduce((sum,rule)=>sum+rule.count,0) : exam.questions.length, window });
       if (admin) {
         if (body.action === 'admin-preview') {
           const selected = exam.assignment_rules ? await repository.previewQuestions(exam.id) : exam.questions;
@@ -145,7 +147,7 @@ export function createHandler(repository) {
       }
       const identity = normalizeIdentity(body.name, body.studentId);
       const canonicalName = await repository.authorize(exam.id, identity);
-      if (!canonicalName) throw new ApiError(403, '姓名或學號不符合本場 B 組名單，請確認資料或聯絡講師。');
+      if (!canonicalName) throw new ApiError(403, '姓名或學號不符合本場應考名單，請聯絡助教核對或補登。');
       identity.name = canonicalName;
       let record = await repository.submission(exam.id, identity.studentId);
       const receipt = async () => {

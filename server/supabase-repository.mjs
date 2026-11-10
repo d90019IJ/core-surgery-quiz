@@ -11,7 +11,7 @@ export function supabaseRepository(url, key) {
       const known = {
         OPEN_NOW_UNAVAILABLE: [409, '僅能在考試當天、截止前立即開放；請先確認已儲存的考試日期。'],
         ASSIGNMENT_REQUIRED: [409, '請重新進入本場考試以載入固定題組。'],
-        ROSTER_DENIED: [403, '姓名或學號不符合本場 B 組名單，請確認資料或聯絡講師。'],
+        ROSTER_DENIED: [403, '姓名或學號不符合本場應考名單，請聯絡助教核對或補登。'],
         EXAM_CLOSED: [409, '考試與問卷未開放或已超過 19:30 截止時間。'],
         INVALID_ANSWERS: [400, '請完成所有題目後再送出。'],
         QUIZ_REQUIRED: [409, '請先完成考試並交卷，再填寫問卷。']
@@ -35,7 +35,7 @@ export function supabaseRepository(url, key) {
     async assignedQuestions(id,identity) { return rpc('core_quiz_assign',{p_exam_id:id,p_student_id:identity.studentId,p_name:identity.name}); },
     async exam(id) { return rpc('core_quiz_context', { p_exam_id: id }); },
     async addRoster(examId, identity) {
-      await query('core_quiz_roster', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({exam_id:examId,student_id:identity.studentId,name:identity.name,group_name:'B'})});
+      await query('core_quiz_roster', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({exam_id:examId,student_id:identity.studentId,name:identity.name,group_name:examId.endsWith('-cohort2')?'A':examId.endsWith('-cohort3')?'C':'B'})});
     },
     async authorize(examId, identity) { return rpc('core_quiz_authorize', {p_exam_id:examId,p_student_id:identity.studentId,p_name:identity.name}); },
     async roster(examId) { return query('core_quiz_roster?select=student_id,name,group_name&exam_id=eq.' + eq(examId) + '&order=student_id.asc&limit=1000'); },

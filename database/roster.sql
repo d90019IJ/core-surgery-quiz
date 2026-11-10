@@ -3,7 +3,7 @@ create table public.core_quiz_roster (
   exam_id text not null references public.core_quiz_exams(id),
   student_id text not null,
   name text not null,
-  group_name text not null check (group_name = 'B'),
+  group_name text not null check (group_name IN ('A','B','C')),
   primary key (exam_id, student_id)
 );
 alter table public.core_quiz_roster enable row level security;
@@ -13,7 +13,7 @@ create function public.core_quiz_authorize(p_exam_id text, p_student_id text, p_
 returns text language sql stable security invoker set search_path = '' as $$
   select name from public.core_quiz_roster
   where exam_id = p_exam_id and student_id = p_student_id
-    and name = p_name and group_name = 'B';
+    and name = p_name and group_name IN ('A','B','C');
 $$;
 revoke all on function public.core_quiz_authorize(text,text,text) from public, anon, authenticated;
 grant execute on function public.core_quiz_authorize(text,text,text) to service_role;
@@ -26,7 +26,7 @@ begin
     end if;
   elsif not old.survey_complete and new.survey_complete then
     if not exists (select 1 from public.core_quiz_roster
-      where exam_id = new.exam_id and student_id = new.student_id and group_name = 'B') then
+      where exam_id = new.exam_id and student_id = new.student_id and group_name IN ('A','B','C')) then
       raise exception 'ROSTER_DENIED';
     end if;
   end if;
