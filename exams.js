@@ -56,6 +56,14 @@ export const exams = [
     "ready": true
   },
   {
+    "id": "minimally-invasive-2026-11-18",
+    "title": "胸腔外科常見疾病：肺結節評估與手術治療",
+    "date": "2026-11-18",
+    "cohort": 1,
+    "group": "B",
+    "ready": true
+  },
+  {
     "id": "clinical-fluids-2026-12-23-cohort2",
     "title": "臨床各式輸液應用",
     "date": "2026-12-23",
@@ -113,11 +121,11 @@ export const exams = [
   },
   {
     "id": "minimally-invasive-2027-02-24-cohort2",
-    "title": "內視鏡及微創手術教學",
+    "title": "胸腔外科常見疾病：肺結節評估與手術治療",
     "date": "2027-02-24",
     "cohort": 2,
     "group": "A",
-    "ready": false
+    "ready": true
   },
   {
     "id": "neurotrauma-2027-03-03-cohort2",
@@ -193,11 +201,11 @@ export const exams = [
   },
   {
     "id": "minimally-invasive-2027-05-05-cohort3",
-    "title": "內視鏡及微創手術教學",
+    "title": "胸腔外科常見疾病：肺結節評估與手術治療",
     "date": "2027-05-05",
     "cohort": 3,
     "group": "C",
-    "ready": false
+    "ready": true
   },
   {
     "id": "neurotrauma-2027-05-12-cohort3",
