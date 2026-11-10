@@ -1,5 +1,7 @@
+import { mountExamSelector } from './exam-selector.js';
 import { request, currentExam } from './api.js';
 currentExam();
+mountExamSelector();
 const $ = id => document.getElementById(id);
 let code = '', rows = [], exam = null, stats = null, busy = false;
 if (window.QUIZ_CONFIG.preview) $('preview-notice').hidden = false;

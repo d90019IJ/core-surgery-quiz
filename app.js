@@ -1,6 +1,8 @@
+import { mountExamSelector } from './exam-selector.js';
 import {addQuestionImage} from './question-media.js?v=1';
 import { request, currentExam } from './api.js';
 currentExam();
+mountExamSelector();
 const $ = id => document.getElementById(id);
 let identity, questions = [], survey = [], busy = false, finished = false, stage = 'identity', clock = null, syncBusy = false;
 if (window.QUIZ_CONFIG.preview) $('preview-notice').hidden = false;
@@ -33,8 +35,9 @@ function tick() {
   if (finished) return;
   const w = activeWindow(), open = w.state === 'open';
   const labels = { unknown: '正在確認考試時間…', unscheduled: '尚未設定考試日期', before: '尚未開放', open: '開放作答與問卷填寫中', paused: '考試已結束', closed: '考試已結束' };
-  $('window-label').textContent = labels[w.state];
-  const ended = ['paused', 'closed'].includes(w.state);
+  const futurePaused = w.state === 'paused' && w.opensAt && w.now < Date.parse(w.opensAt);
+  $('window-label').textContent = futurePaused ? '本場尚未啟用' : labels[w.state];
+  const ended = ['paused', 'closed'].includes(w.state) && !futurePaused;
   $('ended-contact').hidden = !ended;
   $('deadline-note').hidden = ended;
   $('window-date').hidden = ended;
