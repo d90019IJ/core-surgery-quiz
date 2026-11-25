@@ -1,4 +1,5 @@
-import { mountExamSelector } from './exam-selector.js';
+import {addShortAnswer} from './short-answer.js';
+import { mountExamSelector } from './exam-selector.js?v=20261125';
 import {addQuestionImage} from './question-media.js?v=1';
 import { request, currentExam } from './api.js';
 currentExam();
@@ -41,7 +42,8 @@ function tick() {
   $('ended-contact').hidden = !ended;
   $('deadline-note').hidden = ended;
   $('window-date').hidden = ended;
-  $('window-date').textContent = w.opensAt ? new Date(w.opensAt).toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit' }) + ' · ' + new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(w.opensAt)) + '–19:30（台灣時間）' : '';
+  $('window-date').textContent = w.opensAt ? new Date(w.opensAt).toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit' }) + ' · ' + new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(w.opensAt)) + '–' + new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(w.closesAt)) + '（台灣時間）' : '';
+  if(w.closesAt)$('deadline-note').textContent='考試及必填問卷皆須於當天 '+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(w.closesAt))+' 前完成送出（台灣時間）。';
   if (open) {
     const seconds = Math.max(0, Math.floor((Date.parse(w.closesAt) - w.now) / 1000));
     $('countdown').textContent = '剩餘 ' + Math.floor(seconds / 60) + ' 分 ' + String(seconds % 60).padStart(2, '0') + ' 秒（含問卷）';
@@ -52,7 +54,7 @@ function tick() {
   $('confirm-submit').disabled = busy || !open;
   $('survey-submit').disabled = busy || !open;
   $('check-completion').disabled = busy;
-  for (const input of document.querySelectorAll('#quiz-form input, #survey-form input')) input.disabled = busy || !open;
+  for (const input of document.querySelectorAll('#quiz-form input, #quiz-form textarea, #survey-form input')) input.disabled = busy || !open;
   if (!open && $('submit-dialog').open) $('submit-dialog').close();
   if (stage === 'survey') {
     $('survey-form').hidden = !open;
@@ -119,7 +121,8 @@ function renderQuestions(target, items) {
       for(const row of question.table.rows){const tr=document.createElement('tr');row.forEach((value,index)=>{const cell=document.createElement(index===0?'th':'td');if(index===0)cell.scope='row';cell.textContent=value;tr.append(cell);});body.append(tr);}
       table.append(body);wrap.append(table);fieldset.append(wrap);
     }
-    question.options.forEach((option, choice) => {
+    addShortAnswer(fieldset,question);
+    (question.options||[]).forEach((option, choice) => {
       const label = document.createElement('label'); label.className = 'option';
       const input = document.createElement('input'); input.type = question.type === 'multiple' ? 'checkbox' : 'radio'; input.name = question.id; input.value = choice; input.required = question.type !== 'multiple';
       const text = document.createElement('span'); text.className = 'option-text'; text.textContent = option;
@@ -130,10 +133,11 @@ function renderQuestions(target, items) {
   $(target).replaceChildren(fragment);
 }
 function answersFor(formId, items) {
-  return Object.fromEntries(items.map(q => {const values=[...$(formId).querySelectorAll('input[name="'+q.id+'"]:checked')].map(input=>Number(input.value));return [q.id,q.type==='multiple'?values:values[0]];}));
+  return Object.fromEntries(items.map(q => {if(q.type==='short')return [q.id,[...$(formId).querySelectorAll('textarea[name="'+q.id+'"]')].map(x=>x.value.trim())];const values=[...$(formId).querySelectorAll('input[name="'+q.id+'"]:checked')].map(input=>Number(input.value));return [q.id,q.type==='multiple'?values:values[0]];}));
 }
+function answered(q){const value=answersFor('quiz-form',[q])[q.id];return q.type==='short'?value.length===q.fields&&value.every(v=>v.trim()):q.type==='multiple'?value.length>0:Number.isInteger(value);}
 function updateProgress() {
-  const count = questions.filter(q=>$('quiz-form').querySelector('input[name="'+q.id+'"]:checked')).length;
+  const count = questions.filter(q=>answered(q)).length;
   $('progress').value = count; $('progress-label').textContent = '已作答 ' + count + ' / ' + questions.length;
 }
 $('identity-form').addEventListener('submit', async event => {
@@ -151,10 +155,11 @@ $('identity-form').addEventListener('submit', async event => {
   finally { busy = false; tick(); }
 });
 $('quiz-form').addEventListener('change', updateProgress);
+$('quiz-form').addEventListener('input', updateProgress);
 $('quiz-form').addEventListener('submit', event => {
   event.preventDefault(); if (busy || activeWindow().state !== 'open') return;
-  const missing=questions.find(q=>!$('quiz-form').querySelector('input[name="'+q.id+'"]:checked'));
-  if(missing){$('quiz-error').textContent='請完成所有題目，複選題至少選擇一個選項。';$('quiz-form').querySelector('input[name="'+missing.id+'"]').focus();return;}
+  const missing=questions.find(q=>!answered(q));
+  if(missing){$('quiz-error').textContent='請完成所有題目，複選題至少選擇一個選項。';$('quiz-form').querySelector('[name="'+missing.id+'"]').focus();return;}
   $('quiz-error').textContent='';
   $('confirm-identity').textContent = identity.name + ' · ' + identity.studentId + '，已完成 ' + questions.length + ' 題。交卷後還需完成必填問卷。';
   $('submit-dialog').showModal();

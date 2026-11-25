@@ -1,4 +1,4 @@
-import {exams} from './exams.js';
+import {exams} from './exams.js?v=20261125';
 const cohort=Number(new URLSearchParams(location.search).get('cohort'));
 const group={1:'B',2:'A',3:'C'}[cohort];
 const status=document.getElementById('status'),note=document.getElementById('note'),button=document.getElementById('refresh');
