@@ -1,4 +1,4 @@
-import { exams } from './exams.js';
+import { exams } from './exams.js?v=20261125';
 export function mountExamSelector() {
   const current = exams.find(e => e.id === window.QUIZ_CONFIG.examId);
   document.querySelectorAll('[data-exam-group]').forEach(el => { el.textContent = '陽明交大醫學系117級' + (current?.group || 'B') + '組'; });

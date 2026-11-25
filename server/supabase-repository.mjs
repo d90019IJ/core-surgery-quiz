@@ -12,8 +12,9 @@ export function supabaseRepository(url, key) {
         OPEN_NOW_UNAVAILABLE: [409, '僅能在考試當天、截止前立即開放；請先確認已儲存的考試日期。'],
         ASSIGNMENT_REQUIRED: [409, '請重新進入本場考試以載入固定題組。'],
         ROSTER_DENIED: [403, '姓名或學號不符合本場應考名單，請聯絡助教核對或補登。'],
-        EXAM_CLOSED: [409, '考試與問卷未開放或已超過 19:30 截止時間。'],
+        EXAM_CLOSED: [409, '考試與問卷未開放或已超過截止時間。'],
         INVALID_ANSWERS: [400, '請完成所有題目後再送出。'],
+        INVALID_GRADES: [400, '請完整評閱每項簡答，並確認分數格式。'],
         QUIZ_REQUIRED: [409, '請先完成考試並交卷，再填寫問卷。']
       };
       if (known[error.message]) throw new ApiError(...known[error.message]);
@@ -45,11 +46,19 @@ export function supabaseRepository(url, key) {
     async submit(examId, identity, answers) {
       await rpc('core_quiz_submit', { p_exam_id: examId, p_student_id: identity.studentId, p_name: identity.name, p_answers: answers });
     },
+    async review(examId, studentId) {
+      const record=(await query('core_quiz_submissions?select=*&exam_id=eq.'+eq(examId)+'&student_id=eq.'+eq(studentId)+'&limit=1'))[0];
+      if(!record)return null;
+      const assignment=(await query('core_quiz_assignments?select=questions&exam_id=eq.'+eq(examId)+'&student_id=eq.'+eq(studentId)+'&limit=1'))[0];
+      if(!assignment)throw new ApiError(409,'此份考卷沒有簡答題組。');
+      return {record,questions:assignment.questions.filter(q=>q.type==='short')};
+    },
+    async grade(examId, studentId, grades, note) {return rpc('core_quiz_grade',{p_exam_id:examId,p_student_id:studentId,p_grades:grades,p_note:note});},
     async submitSurvey(examId, studentId, answers) {
       await rpc('core_quiz_survey_submit', { p_exam_id: examId, p_student_id: studentId, p_answers: answers });
     },
     async list(examId, offset, limit) {
-      return query('core_quiz_submissions?select=name,student_id,submitted_at,score,answers,survey_complete,question_ids&exam_id=eq.' + eq(examId) + '&order=submitted_at.asc,student_id.asc&offset=' + offset + '&limit=' + limit);
+      return query('core_quiz_submissions?select=name,student_id,submitted_at,score,answers,survey_complete,question_ids,grading_status,manual_grades,review_note,reviewed_at&exam_id=eq.' + eq(examId) + '&order=submitted_at.asc,student_id.asc&offset=' + offset + '&limit=' + limit);
     },
     async surveyStats(examId) {
       return query('core_quiz_survey_counts?select=item_id,choice,response_count&exam_id=eq.' + eq(examId) + '&order=item_id.asc,choice.asc');

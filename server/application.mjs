@@ -24,7 +24,10 @@ export function validateAnswers(answers, questions) {
   for (const q of questions) {
     const value = answers[q.id], valid = n => Number.isInteger(n) && n >= 0 && n < q.options.length;
     if (!Object.hasOwn(answers,q.id)) invalid();
-    if (q.type === 'multiple') {
+    if (q.type === 'short') {
+      if (!Array.isArray(value) || value.length !== q.fields || value.some(v=>typeof v!=='string'||!v.trim()||v.length>800)) invalid();
+      result[q.id] = value.map(v=>v.trim());
+    } else if (q.type === 'multiple') {
       if (!Array.isArray(value) || !value.length || value.length > q.options.length || !value.every(valid) || new Set(value).size !== value.length) invalid();
       result[q.id] = [...value].sort((a,b)=>a-b);
     } else {
@@ -51,7 +54,7 @@ export function examWindow(exam) {
 }
 export function requireOpen(exam) {
   const state = examWindow(exam).state;
-  const messages = { unscheduled: '尚未設定考試日期，請聯絡講師。', before: '尚未到開放時間，請於頁面顯示的開放時間再進入。', closed: '已超過 19:30，考試與問卷皆已截止。', paused: '講師已暫停收件，請聯絡講師。' };
+  const messages = { unscheduled: '尚未設定考試日期，請聯絡講師。', before: '尚未到開放時間，請於頁面顯示的開放時間再進入。', closed: '已超過截止時間，考試與問卷皆已截止。', paused: '講師已暫停收件，請聯絡講師。' };
   if (state !== 'open') throw new ApiError(409, messages[state]);
 }
 export function scheduleForDate(date, opensTime = '18:30') {
@@ -72,7 +75,7 @@ function equalDigest(a, b) {
   return diff === 0;
 }
 export function publicQuestions(questions) {
-  return questions.map(q=>({id:q.id,text:q.text,options:q.options,...(q.type==='multiple'?{type:'multiple'}:{}),...(q.table?{table:q.table}:{}),...(q.image?{image:q.image}:{})}));
+  return questions.map(q=>({id:q.id,text:q.text,options:q.options,...(q.type==='multiple'?{type:'multiple'}:q.type==='short'?{type:'short',fields:q.fields}:{}),...(q.table?{table:q.table}:{}),...(q.image?{image:q.image}:{})}));
 }
 export function createHandler(repository) {
   return async function handle(request) {
@@ -95,7 +98,7 @@ export function createHandler(repository) {
       let body;
       try { body = JSON.parse(text); } catch { throw new ApiError(400, '資料格式不正確。'); }
       if (!body || typeof body !== 'object' || typeof body.examId !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(body.examId)) throw new ApiError(400, '無效的測驗場次。');
-      const admin = ['admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey', 'admin-roster', 'admin-roster-add', 'admin-open-now', 'admin-preview', 'admin-bank'].includes(body.action);
+      const admin = ['admin-review', 'admin-grade', 'admin-list', 'admin-toggle', 'admin-schedule', 'admin-survey', 'admin-roster', 'admin-roster-add', 'admin-open-now', 'admin-preview', 'admin-bank'].includes(body.action);
       if (admin) {
         const code = request.headers.get('X-Teacher-Code') || '';
         if (code.length < 32 || code.length > 150 || !equalDigest(await sha256(code), settings.admin_hash)) throw new ApiError(401, '管理碼不正確。');
@@ -107,6 +110,17 @@ export function createHandler(repository) {
       if (pending && (['start','submit','admin-preview','admin-bank','admin-open-now'].includes(body.action) || (body.action === 'admin-toggle' && body.open))) throw new ApiError(409, '本場考題尚未備妥，請聯絡助教補齊題庫後再啟用。');
       if (body.action === 'info') return reply({ pending, title: exam.title, questionCount: pending ? 0 : exam.assignment_rules ? exam.assignment_rules.reduce((sum,rule)=>sum+rule.count,0) : exam.questions.length, window });
       if (admin) {
+        if (body.action === 'admin-review' || body.action === 'admin-grade') {
+          if(typeof body.studentId!=='string'|| !/^[A-Z0-9][A-Z0-9-]{0,31}$/.test(body.studentId)) throw new ApiError(400,'無效的學號。');
+          if(body.action==='admin-grade') {
+            if(!body.grades || typeof body.grades!=='object'||Array.isArray(body.grades) || typeof (body.note??'')!=='string' || (body.note??'').length>2000) throw new ApiError(400,'請完成每項簡答評閱。');
+            await repository.grade(exam.id,body.studentId,body.grades,body.note??'');
+            return reply({ok:true});
+          }
+          const review=await repository.review(exam.id,body.studentId);
+          if(!review) throw new ApiError(404,'找不到此份考卷。');
+          return reply(review);
+        }
         if (body.action === 'admin-preview') {
           const selected = exam.assignment_rules ? await repository.previewQuestions(exam.id) : exam.questions;
           return reply({title:exam.title,randomized:!!exam.assignment_rules,questions:publicQuestions(selected)});
